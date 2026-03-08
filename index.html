@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1b2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PrintCost">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Bambu P1P — Cost Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0b1623;
+    --surface:   #111e2e;
+    --card:      #162236;
+    --input-bg:  #0d1928;
+    --border:    #1e3550;
+    --blue:      #00aaff;
+    --blue-l:    #33ccff;
+    --orange:    #ff6b1a;
+    --orange-l:  #ff8c3a;
+    --green:     #00e890;
+    --yellow:    #ffd700;
+    --teal:      #00d4c8;
+    --red:       #ff3d5a;
+    --text:      #ddeeff;
+    --muted:     #5a7a99;
+    --mono:      'Share Tech Mono', monospace;
+    --display:   'Orbitron', sans-serif;
+    --safe-b:    env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    overscroll-behavior: none;
+  }
+
+  /* ── Layout ──────────────────────────────────────── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ──────────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px 10px;
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--blue);
+    letter-spacing: 1px;
+  }
+  header p {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Tab bar ─────────────────────────────────────── */
+  nav {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  nav button {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--display);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    padding: 12px 4px;
+    cursor: pointer;
+    position: relative;
+    transition: color .2s;
+  }
+  nav button.active {
+    color: var(--blue);
+  }
+  nav button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 10%; right: 10%;
+    height: 2px;
+    background: var(--blue);
+    border-radius: 2px 2px 0 0;
+  }
+
+  /* ── Scroll area ─────────────────────────────────── */
+  main {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px 14px calc(14px + var(--safe-b));
+  }
+
+  /* ── Tab panels ──────────────────────────────────── */
+  .tab { display: none; }
+  .tab.active { display: block; }
+
+  /* ── Cards ───────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: var(--display);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Input rows ──────────────────────────────────── */
+  .field {
+    margin-bottom: 12px;
+  }
+  .field label {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.8px;
+    margin-bottom: 5px;
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  input[type="number"], input[type="text"] {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 16px;
+    padding: 11px 14px;
+    outline: none;
+    -webkit-appearance: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  input[type="number"]:focus, input[type="text"]:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(0,170,255,.15);
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .unit-tag {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    min-width: 30px;
+  }
+
+  /* g/oz toggle */
+  .toggle-btn {
+    background: var(--orange);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-family: var(--display);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 8px 12px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background .15s, transform .1s;
+    white-space: nowrap;
+  }
+  .toggle-btn:active { transform: scale(.95); }
+
+  /* ── Slider ──────────────────────────────────────── */
+  .slider-wrap {
+    position: relative;
+    margin-top: 6px;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    outline: none;
+    border: 1px solid var(--border);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--orange);
+    border: 2px solid var(--orange-l);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(255,107,26,.4);
+  }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Calculate button ────────────────────────────── */
+  #calc-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--orange), var(--orange-l));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    padding: 16px;
+    cursor: pointer;
+    margin-top: 4px;
+    box-shadow: 0 4px 20px rgba(255,107,26,.35);
+    transition: transform .1s, box-shadow .1s;
+    position: relative;
+    overflow: hidden;
+  }
+  #calc-btn:active {
+    transform: scale(.98);
+    box-shadow: 0 2px 10px rgba(255,107,26,.25);
+  }
+  #calc-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+    animation: shimmer 2.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+
+  #clear-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: color .2s, border-color .2s;
+  }
+  #clear-btn:active { color: var(--text); border-color: var(--blue); }
+
+  /* ── Results ─────────────────────────────────────── */
+  #total-display {
+    text-align: center;
+    padding: 8px 0 14px;
+  }
+  #total-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  #total-amount {
+    font-family: var(--display);
+    font-size: 52px;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1;
+    letter-spacing: -1px;
+    transition: all .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  #total-amount.pop {
+    animation: pop .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop {
+    0%   { transform: scale(.85); opacity: .5; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  #total-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* line items */
+  .breakdown-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    font-size: 13px;
+  }
+  .breakdown-line:last-child { border-bottom: none; }
+  .breakdown-line .bl-label {
+    color: var(--muted);
+    font-size: 12px;
+    flex: 1;
+  }
+  .breakdown-line .bl-val {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: bold;
+    text-align: right;
+  }
+  .bl-val.orange { color: var(--orange-l); }
+  .bl-val.teal   { color: var(--teal); }
+  .bl-val.red    { color: var(--red); }
+  .bl-val.yellow { color: var(--yellow); }
+  .bl-val.green  { color: var(--green); }
+  .bl-val.blue   { color: var(--blue-l); }
+  .bl-val.muted  { color: var(--muted); font-weight: normal; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 10px 0;
+  }
+  .divider.accent { background: var(--orange); opacity: .5; }
+
+  /* Sell price hero */
+  .sell-hero {
+    background: linear-gradient(135deg, rgba(255,215,0,.08), rgba(255,107,26,.06));
+    border: 1px solid rgba(255,215,0,.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 8px;
+  }
+  .sell-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sell-hero-label {
+    font-family: var(--display);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--yellow);
+  }
+  .sell-hero-val {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--yellow);
+  }
+  .sell-hero-note {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .stat-cell {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue);
+  }
+  .stat-val.orange { color: var(--orange-l); }
+  .stat-label {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  /* convert hint */
+  .convert-hint {
+    text-align: center;
+    font-size: 10px;
+    color: var(--blue-l);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Settings ────────────────────────────────────── */
+  .settings-section {
+    font-family: var(--display);
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 4px 0 8px;
+    margin-top: 4px;
+  }
+  .settings-section.blue   { color: var(--blue); }
+  .settings-section.orange { color: var(--orange-l); }
+  .settings-section.teal   { color: var(--teal); }
+  .settings-section.yellow { color: var(--yellow); }
+
+  .stg-field {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+  .stg-field label {
+    flex: 1;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 0;
+  }
+  .stg-field input {
+    width: 90px;
+    flex-shrink: 0;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 7px 10px;
+    outline: none;
+    text-align: right;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+  }
+  .stg-field input::-webkit-outer-spin-button,
+  .stg-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .stg-field input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(0,170,255,.15);
+  }
+  .stg-unit {
+    width: 36px;
+    font-size: 10px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  #save-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #1a3a5c, #1e4570);
+    color: var(--blue);
+    border: 1px solid var(--blue);
+    border-radius: 12px;
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    padding: 14px;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 2px 12px rgba(0,170,255,.15);
+    transition: background .15s, transform .1s;
+  }
+  #save-btn:active { transform: scale(.98); }
+
+  /* toast */
+  #toast {
+    position: fixed;
+    bottom: calc(24px + var(--safe-b));
+    left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--green);
+    color: #001a0d;
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    padding: 10px 22px;
+    border-radius: 30px;
+    white-space: nowrap;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 999;
+    pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Install banner */
+  #install-banner {
+    display: none;
+    background: linear-gradient(135deg, var(--orange), var(--orange-l));
+    color: white;
+    padding: 10px 16px;
+    font-size: 11px;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  #install-banner span { flex: 1; }
+  #install-banner button {
+    background: rgba(255,255,255,.2);
+    border: 1px solid rgba(255,255,255,.4);
+    color: white;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+  }
+  #install-banner .dismiss {
+    background: none;
+    border: none;
+    font-size: 16px;
+    padding: 2px 6px;
+    opacity: .7;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <h1>⬡ BAMBU P1P</h1>
+    <p>PRINT COST CALCULATOR · ZIP 02150 · MA</p>
+  </header>
+
+  <div id="install-banner">
+    <span>📲 Add to Home Screen for app-like use!</span>
+    <button id="install-btn">Install</button>
+    <button class="dismiss" id="dismiss-btn">✕</button>
+  </div>
+
+  <nav>
+    <button class="active" data-tab="calc">⬡ CALCULATE</button>
+    <button data-tab="results">$ RESULTS</button>
+    <button data-tab="settings">⚙ SETTINGS</button>
+  </nav>
+
+  <main>
+
+    <!-- ── CALCULATE TAB ─────────────────────────────── -->
+    <div class="tab active" id="tab-calc">
+
+      <div class="card">
+        <div class="card-title" style="color:var(--blue)">PRINT JOB</div>
+
+        <div class="field">
+          <label>FILAMENT USED</label>
+          <div class="input-row">
+            <input type="number" id="inp-weight" placeholder="0" inputmode="decimal" step="any">
+            <button class="toggle-btn" id="unit-toggle">g</button>
+          </div>
+          <div id="convert-hint" class="convert-hint" style="margin-top:6px"></div>
+        </div>
+
+        <div class="field">
+          <label>PRINT TIME</label>
+          <div class="input-row">
+            <input type="number" id="inp-hrs" placeholder="0.0" inputmode="decimal" step="any">
+            <span class="unit-tag">hours</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>FAIL RATE — <span id="fail-display" style="color:var(--orange)">0%</span></label>
+          <div class="slider-wrap">
+            <input type="range" id="fail-slider" min="0" max="100" value="0">
+          </div>
+          <div class="slider-labels"><span>0% — Perfect</span><span>50%</span><span>100% — Always Fails</span></div>
+        </div>
+
+        <button id="calc-btn">CALCULATE COST</button>
+        <button id="clear-btn">Clear</button>
+      </div>
+
+    </div>
+
+    <!-- ── RESULTS TAB ───────────────────────────────── -->
+    <div class="tab" id="tab-results">
+
+      <div class="card">
+        <div id="total-display">
+          <div id="total-label">YOUR COST TO MAKE</div>
+          <div id="total-amount">$--.--</div>
+          <div id="total-sub"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="breakdown-line">
+          <span class="bl-label">Filament</span>
+          <span class="bl-val" id="r-fil">--</span>
+        </div>
+        <div class="breakdown-line">
+          <span class="bl-label">Electricity</span>
+          <span class="bl-val" id="r-elec">--</span>
+        </div>
+        <div class="breakdown-line">
+          <span class="bl-label">Nozzle Wear</span>
+          <span class="bl-val orange" id="r-nozzle">--</span>
+        </div>
+        <div class="breakdown-line">
+          <span class="bl-label">Print Sheet Wear</span>
+          <span class="bl-val orange" id="r-sheet">--</span>
+        </div>
+        <div class="breakdown-line">
+          <span class="bl-label">Packaging / Box</span>
+          <span class="bl-val teal" id="r-boxing">--</span>
+        </div>
+        <div class="breakdown-line">
+          <span class="bl-label">Shipping</span>
+          <span class="bl-val teal" id="r-shipping">--</span>
+        </div>
+        <div class="breakdown-line">
+          <span class="bl-label">Fail Overhead</span>
+          <span class="bl-val red" id="r-fail">--</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="breakdown-line">
+          <span class="bl-label">Subtotal</span>
+          <span class="bl-val" id="r-subtotal">--</span>
+        </div>
+        <div class="breakdown-line">
+          <span class="bl-label" id="r-tax-label">MA Tax (6.25%)</span>
+          <span class="bl-val yellow" id="r-tax">--</span>
+        </div>
+
+        <div class="divider accent"></div>
+
+        <div class="sell-hero" id="sell-hero">
+          <div class="sell-hero-top">
+            <span class="sell-hero-label">SUGGESTED SELL PRICE</span>
+            <span class="sell-hero-val" id="r-sell">--</span>
+          </div>
+          <div class="sell-hero-note" id="r-sell-note"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="color:var(--blue)">STATS</div>
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <div class="stat-val" id="st-cpg">--</div>
+            <div class="stat-label">$/g filament</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-val" id="st-ephr">--</div>
+            <div class="stat-label">$/hr electric</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-val orange" id="st-noz">--</div>
+            <div class="stat-label">$/hr nozzle</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-val orange" id="st-sht">--</div>
+            <div class="stat-label">$/print sheet</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-val" id="st-kwh">--</div>
+            <div class="stat-label">kWh consumed</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-val" id="st-spool">--</div>
+            <div class="stat-label">% of spool used</div>
+          </div>
+        </div>
+        <div class="convert-hint" id="r-convert" style="margin-top:10px"></div>
+      </div>
+
+    </div>
+
+    <!-- ── SETTINGS TAB ──────────────────────────────── -->
+    <div class="tab" id="tab-settings">
+
+      <div class="card">
+        <div class="card-title" style="color:var(--blue)">SETTINGS</div>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.5">
+          These values are saved on your device and persist between sessions.
+        </p>
+
+        <div class="settings-section blue">PRINTER &amp; FILAMENT</div>
+        <div class="stg-field">
+          <label>Electricity Rate</label>
+          <input type="number" id="s-kwh" value="0.31" step="0.01">
+          <span class="stg-unit">$/kWh</span>
+        </div>
+        <div class="stg-field">
+          <label>Printer Wattage</label>
+          <input type="number" id="s-watts" value="180">
+          <span class="stg-unit">W</span>
+        </div>
+        <div class="stg-field">
+          <label>Filament Spool Cost</label>
+          <input type="number" id="s-spool-usd" value="20.00" step="0.01">
+          <span class="stg-unit">$</span>
+        </div>
+        <div class="stg-field">
+          <label>Spool Weight</label>
+          <input type="number" id="s-spool-g" value="1000">
+          <span class="stg-unit">g</span>
+        </div>
+
+        <div class="settings-section orange">WEAR &amp; TEAR</div>
+        <div class="stg-field">
+          <label>Nozzle Cost</label>
+          <input type="number" id="s-noz-cost" value="8.00" step="0.01">
+          <span class="stg-unit">$</span>
+        </div>
+        <div class="stg-field">
+          <label>Nozzle Life</label>
+          <input type="number" id="s-noz-hrs" value="400">
+          <span class="stg-unit">hrs</span>
+        </div>
+        <div class="stg-field">
+          <label>Print Sheet Cost</label>
+          <input type="number" id="s-sheet-cost" value="25.00" step="0.01">
+          <span class="stg-unit">$</span>
+        </div>
+        <div class="stg-field">
+          <label>Prints Per Sheet</label>
+          <input type="number" id="s-sheet-prints" value="500">
+          <span class="stg-unit">prints</span>
+        </div>
+
+        <div class="settings-section teal">SHIPPING &amp; PACKAGING</div>
+        <div class="stg-field">
+          <label>Shipping Cost</label>
+          <input type="number" id="s-shipping" value="5.00" step="0.01">
+          <span class="stg-unit">$</span>
+        </div>
+        <div class="stg-field">
+          <label>Box / Packaging</label>
+          <input type="number" id="s-boxing" value="1.50" step="0.01">
+          <span class="stg-unit">$</span>
+        </div>
+
+        <div class="settings-section yellow">TAX &amp; MARKUP</div>
+        <div class="stg-field">
+          <label>MA Sales Tax</label>
+          <input type="number" id="s-tax" value="6.25" step="0.01">
+          <span class="stg-unit">%</span>
+        </div>
+        <div class="stg-field">
+          <label>Markup % (sell price)</label>
+          <input type="number" id="s-markup" value="300">
+          <span class="stg-unit">%</span>
+        </div>
+
+        <button id="save-btn">💾 SAVE SETTINGS</button>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<div id="toast">✓ SETTINGS SAVED</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let unit = 'g'; // 'g' or 'oz'
+let deferredInstall = null;
+
+const DEFAULTS = {
+  kwh: 0.31, watts: 180, spoolUsd: 20, spoolG: 1000,
+  nozCost: 8, nozHrs: 400, sheetCost: 25, sheetPrints: 500,
+  shipping: 5, boxing: 1.5, tax: 6.25, markup: 300, unit: 'g'
+};
+
+// ── LocalStorage helpers ───────────────────────────────
+function saveSettings() {
+  const s = {
+    kwh:        parseFloat(id('s-kwh').value)         || DEFAULTS.kwh,
+    watts:      parseFloat(id('s-watts').value)       || DEFAULTS.watts,
+    spoolUsd:   parseFloat(id('s-spool-usd').value)   || DEFAULTS.spoolUsd,
+    spoolG:     parseFloat(id('s-spool-g').value)     || DEFAULTS.spoolG,
+    nozCost:    parseFloat(id('s-noz-cost').value)    || DEFAULTS.nozCost,
+    nozHrs:     parseFloat(id('s-noz-hrs').value)     || DEFAULTS.nozHrs,
+    sheetCost:  parseFloat(id('s-sheet-cost').value)  || DEFAULTS.sheetCost,
+    sheetPrints:parseFloat(id('s-sheet-prints').value)|| DEFAULTS.sheetPrints,
+    shipping:   parseFloat(id('s-shipping').value)    || DEFAULTS.shipping,
+    boxing:     parseFloat(id('s-boxing').value)      || DEFAULTS.boxing,
+    tax:        parseFloat(id('s-tax').value)         || DEFAULTS.tax,
+    markup:     parseFloat(id('s-markup').value)      || DEFAULTS.markup,
+    unit
+  };
+  localStorage.setItem('bambu_settings', JSON.stringify(s));
+  return s;
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem('bambu_settings');
+    if (!raw) return DEFAULTS;
+    const s = { ...DEFAULTS, ...JSON.parse(raw) };
+    return s;
+  } catch { return DEFAULTS; }
+}
+
+function applySettings(s) {
+  id('s-kwh').value         = s.kwh;
+  id('s-watts').value       = s.watts;
+  id('s-spool-usd').value   = s.spoolUsd;
+  id('s-spool-g').value     = s.spoolG;
+  id('s-noz-cost').value    = s.nozCost;
+  id('s-noz-hrs').value     = s.nozHrs;
+  id('s-sheet-cost').value  = s.sheetCost;
+  id('s-sheet-prints').value= s.sheetPrints;
+  id('s-shipping').value    = s.shipping;
+  id('s-boxing').value      = s.boxing;
+  id('s-tax').value         = s.tax;
+  id('s-markup').value      = s.markup;
+  unit = s.unit || 'g';
+  id('unit-toggle').textContent = unit;
+}
+
+// ── Util ───────────────────────────────────────────────
+const id = x => document.getElementById(x);
+const fmt = v => {
+  if (!isFinite(v)) return '∞';
+  if (v < 0.01 && v > 0) return '$' + v.toFixed(5);
+  return '$' + v.toFixed(2);
+};
+
+// ── Tab switching ──────────────────────────────────────
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = btn.dataset.tab;
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    id('tab-' + t).classList.add('active');
+  });
+});
+
+// ── Unit toggle ────────────────────────────────────────
+id('unit-toggle').addEventListener('click', () => {
+  const prev = unit;
+  unit = prev === 'g' ? 'oz' : 'g';
+  id('unit-toggle').textContent = unit;
+  const val = parseFloat(id('inp-weight').value);
+  if (!isNaN(val) && val > 0) {
+    id('inp-weight').value = unit === 'oz'
+      ? (val / 28.3495).toFixed(2)
+      : (val * 28.3495).toFixed(1);
+  }
+  updateConvertHint();
+});
+
+function updateConvertHint() {
+  const val = parseFloat(id('inp-weight').value);
+  if (!isNaN(val) && val > 0) {
+    if (unit === 'g') {
+      id('convert-hint').textContent = `= ${(val/28.3495).toFixed(2)} oz`;
+    } else {
+      id('convert-hint').textContent = `= ${(val*28.3495).toFixed(1)} g`;
+    }
+  } else {
+    id('convert-hint').textContent = '';
+  }
+}
+id('inp-weight').addEventListener('input', updateConvertHint);
+
+// ── Fail slider ────────────────────────────────────────
+id('fail-slider').addEventListener('input', () => {
+  const v = id('fail-slider').value;
+  id('fail-display').textContent = v + '%';
+  const pct = parseInt(v);
+  id('fail-display').style.color =
+    pct >= 30 ? 'var(--red)' : pct >= 10 ? 'var(--orange)' : 'var(--green)';
+});
+
+// ── Calculate ──────────────────────────────────────────
+id('calc-btn').addEventListener('click', calculate);
+
+function calculate() {
+  const weightRaw = parseFloat(id('inp-weight').value);
+  const hrs       = parseFloat(id('inp-hrs').value);
+  const failPct   = parseFloat(id('fail-slider').value);
+
+  if (isNaN(weightRaw) || weightRaw <= 0) {
+    alert('Please enter filament weight > 0');
+    id('inp-weight').focus();
+    return;
+  }
+  if (isNaN(hrs) || hrs <= 0) {
+    alert('Please enter print time > 0');
+    id('inp-hrs').focus();
+    return;
+  }
+
+  const s = loadSettings();
+
+  const grams      = unit === 'g' ? weightRaw : weightRaw * 28.3495;
+  const oz         = grams / 28.3495;
+  const costPerG   = s.spoolUsd / s.spoolG;
+  const filCost    = grams * costPerG;
+  const kwhUsed    = (s.watts / 1000) * hrs;
+  const elecCost   = kwhUsed * s.kwh;
+  const nozPerHr   = s.nozHrs > 0 ? s.nozCost / s.nozHrs : 0;
+  const nozWear    = nozPerHr * hrs;
+  const sheetPerPr = s.sheetPrints > 0 ? s.sheetCost / s.sheetPrints : 0;
+  const sheetWear  = sheetPerPr;
+  const baseCost   = filCost + elecCost + nozWear + sheetWear + s.shipping + s.boxing;
+
+  let totalCost, failOverhead;
+  if (failPct >= 100) {
+    totalCost = failOverhead = Infinity;
+  } else {
+    const mult   = 1 / (1 - failPct / 100);
+    totalCost    = baseCost * mult;
+    failOverhead = totalCost - baseCost;
+  }
+
+  const taxAmt   = isFinite(totalCost) ? totalCost * (s.tax / 100) : Infinity;
+  const sellPrice= isFinite(totalCost) ? totalCost * (1 + s.markup / 100) : Infinity;
+  const profit   = isFinite(sellPrice) ? sellPrice - totalCost : Infinity;
+
+  // ── Update total ────────────────────────
+  const totalEl = id('total-amount');
+  totalEl.classList.remove('pop');
+  void totalEl.offsetWidth;
+  totalEl.classList.add('pop');
+
+  if (!isFinite(totalCost)) {
+    totalEl.textContent = '∞';
+    totalEl.style.color = 'var(--red)';
+    id('total-sub').textContent = '100% fail rate — never succeeds';
+  } else {
+    totalEl.textContent = fmt(totalCost);
+    totalEl.style.color = 'var(--green)';
+    id('total-sub').textContent = `${hrs}hr print · ${grams.toFixed(1)}g filament`;
+  }
+
+  // ── Line items ──────────────────────────
+  id('r-fil').textContent      = fmt(filCost);
+  id('r-elec').textContent     = fmt(elecCost);
+  id('r-nozzle').textContent   = fmt(nozWear);
+  id('r-sheet').textContent    = fmt(sheetWear);
+  id('r-boxing').textContent   = fmt(s.boxing);
+  id('r-shipping').textContent = fmt(s.shipping);
+  id('r-fail').textContent     = failPct === 0 ? '--' : fmt(failOverhead);
+  id('r-fail').className       = 'bl-val ' + (failPct > 0 ? 'red' : 'muted');
+  id('r-subtotal').textContent = fmt(totalCost);
+  id('r-tax-label').textContent= `MA Tax (${s.tax}%)`;
+  id('r-tax').textContent      = fmt(taxAmt);
+  id('r-sell').textContent     = fmt(sellPrice);
+  id('r-sell-note').textContent= isFinite(profit)
+    ? `+${s.markup.toFixed(0)}% markup  ·  profit: ${fmt(profit)}`
+    : '';
+
+  // ── Stats ───────────────────────────────
+  id('st-cpg').textContent   = `$${costPerG.toFixed(5)}`;
+  id('st-ephr').textContent  = `$${((s.watts/1000)*s.kwh).toFixed(4)}`;
+  id('st-noz').textContent   = `$${nozPerHr.toFixed(4)}`;
+  id('st-sht').textContent   = `$${sheetPerPr.toFixed(4)}`;
+  id('st-kwh').textContent   = kwhUsed.toFixed(3);
+  const spoolPct = (grams / s.spoolG * 100).toFixed(1);
+  id('st-spool').textContent = spoolPct + '%';
+
+  id('r-convert').textContent = unit === 'g'
+    ? `${grams.toFixed(1)}g = ${oz.toFixed(2)} oz  ·  ${spoolPct}% of spool`
+    : `${weightRaw.toFixed(2)} oz = ${grams.toFixed(1)}g  ·  ${spoolPct}% of spool`;
+
+  // Switch to results tab
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="results"]').classList.add('active');
+  id('tab-results').classList.add('active');
+  id('tab-results').scrollTop = 0;
+}
+
+// ── Clear ──────────────────────────────────────────────
+id('clear-btn').addEventListener('click', () => {
+  id('inp-weight').value = '';
+  id('inp-hrs').value    = '';
+  id('fail-slider').value = 0;
+  id('fail-display').textContent = '0%';
+  id('fail-display').style.color = 'var(--green)';
+  id('convert-hint').textContent = '';
+});
+
+// ── Save Settings ──────────────────────────────────────
+id('save-btn').addEventListener('click', () => {
+  saveSettings();
+  showToast('✓ SETTINGS SAVED');
+});
+
+function showToast(msg) {
+  const t = id('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── PWA Install ────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstall = e;
+  const banner = id('install-banner');
+  banner.style.display = 'flex';
+});
+
+id('install-btn').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  const { outcome } = await deferredInstall.userChoice;
+  if (outcome === 'accepted') {
+    id('install-banner').style.display = 'none';
+  }
+  deferredInstall = null;
+});
+
+id('dismiss-btn').addEventListener('click', () => {
+  id('install-banner').style.display = 'none';
+});
+
+// ── Service Worker ─────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ── Init ───────────────────────────────────────────────
+(function init() {
+  const s = loadSettings();
+  applySettings(s);
+})();
+</script>
+</body>
+</html>
