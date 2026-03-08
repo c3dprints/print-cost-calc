@@ -10,9 +10,6 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>Bambu P1P — Cost Calculator</title>
-<link rel="canonical" href="/">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="C3D Calc">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
 <style>
@@ -502,95 +499,6 @@
   }
   #save-btn:active { transform: scale(.98); }
 
-
-  /* Install card in settings */
-  #install-card {
-    background: linear-gradient(135deg, rgba(0,170,255,.07), rgba(0,212,200,.05));
-    border: 1px solid rgba(0,170,255,.25);
-    border-radius: 14px;
-    padding: 16px;
-    margin-top: 12px;
-  }
-  #install-card h3 {
-    font-family: var(--display);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    color: var(--blue);
-    margin-bottom: 8px;
-  }
-  #install-card p {
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.6;
-    margin-bottom: 12px;
-  }
-  #install-card p strong { color: var(--text); }
-  #install-pwa-btn {
-    width: 100%;
-    background: linear-gradient(135deg, var(--blue), #0088cc);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-family: var(--display);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    padding: 14px;
-    cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0,170,255,.3);
-    transition: transform .1s, opacity .2s;
-    margin-bottom: 8px;
-  }
-  #install-pwa-btn:active { transform: scale(.98); }
-  #install-pwa-btn:disabled {
-    opacity: .5;
-    cursor: default;
-  }
-  #install-status {
-    font-size: 11px;
-    text-align: center;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-  #install-status.success { color: var(--green); }
-  .manual-steps {
-    margin-top: 10px;
-    background: rgba(0,0,0,.2);
-    border-radius: 8px;
-    padding: 10px 12px;
-    display: none;
-  }
-  .manual-steps.show { display: block; }
-  .manual-steps ol {
-    padding-left: 16px;
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 2;
-  }
-  .manual-steps ol li strong { color: var(--text); }
-  #recheck-btn {
-    width: 100%;
-    background: transparent;
-    color: var(--blue);
-    border: 1px solid var(--blue);
-    border-radius: 8px;
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 9px;
-    cursor: pointer;
-    margin-top: 10px;
-    letter-spacing: 1px;
-  }
-  #recheck-btn:active { background: rgba(0,170,255,.1); }
-  #install-status-bar {
-    font-size: 11px;
-    color: var(--muted);
-    text-align: center;
-    margin-top: 6px;
-    min-height: 18px;
-  }
-
   /* toast */
   #toast {
     position: fixed;
@@ -875,42 +783,6 @@
         </div>
 
         <button id="save-btn">💾 SAVE SETTINGS</button>
-
-        <div id="install-card">
-          <h3>📲 INSTALL AS MOBILE APP</h3>
-          <p id="install-desc">Checking install status...</p>
-
-          <div id="install-ready-zone">
-            <button id="install-pwa-btn">⬇ INSTALL APP NOW</button>
-          </div>
-
-          <div id="install-status-bar"></div>
-
-          <!-- Manual fallback steps -->
-          <div class="manual-steps" id="manual-steps">
-            <p style="color:var(--orange-l);font-size:11px;margin-bottom:8px;font-weight:bold">
-              ⚠ Do NOT use "Add to Home Screen" from the browser menu — that creates a plain shortcut, not the real app.
-            </p>
-            <p style="color:var(--muted);font-size:11px;margin-bottom:8px;">
-              To get the real PWA install prompt to appear:
-            </p>
-            <ol>
-              <li>Make sure you're using <strong>Chrome</strong> (not Samsung Internet)</li>
-              <li>Visit the page, <strong>scroll around</strong> a little</li>
-              <li>Come back to Settings and tap <strong>Check Again</strong></li>
-              <li>If still not working, try <strong>clearing Chrome's site data</strong> for this page and reload</li>
-            </ol>
-            <button id="recheck-btn">🔄 CHECK AGAIN</button>
-          </div>
-
-          <!-- Already installed state -->
-          <div id="installed-zone" style="display:none;text-align:center;padding:8px 0">
-            <div style="font-size:28px;margin-bottom:6px">✅</div>
-            <div style="font-family:var(--display);font-size:11px;color:var(--green);letter-spacing:1.5px">APP IS INSTALLED</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Running in standalone mode</div>
-          </div>
-        </div>
-
       </div>
 
     </div>
@@ -994,7 +866,6 @@ document.querySelectorAll('nav button').forEach(btn => {
     document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     id('tab-' + t).classList.add('active');
-    if (t === 'settings') updateInstallUI();
   });
 });
 
@@ -1159,98 +1030,20 @@ function showToast(msg) {
 }
 
 // ── PWA Install ────────────────────────────────────────
-function isInstalled() {
-  return window.matchMedia('(display-mode: standalone)').matches
-      || window.matchMedia('(display-mode: minimal-ui)').matches
-      || window.navigator.standalone === true;
-}
-
-function updateInstallUI() {
-  // Guard: elements only exist once Settings tab has been rendered
-  const desc      = id('install-desc');
-  const readyZone = id('install-ready-zone');
-  const steps     = id('manual-steps');
-  const instZone  = id('installed-zone');
-  const statusBar = id('install-status-bar');
-  if (!desc || !readyZone || !steps || !instZone || !statusBar) return;
-
-  if (isInstalled()) {
-    desc.textContent = 'You're all set!';
-    readyZone.style.display = 'none';
-    steps.classList.remove('show');
-    instZone.style.display = 'block';
-    statusBar.textContent = '';
-  } else if (deferredInstall) {
-    desc.textContent = '✅ Chrome is ready to install! Tap the button below for the real app experience — no browser bar, works offline.';
-    desc.style.color = 'var(--text)';
-    readyZone.style.display = 'block';
-    steps.classList.remove('show');
-    instZone.style.display = 'none';
-    statusBar.textContent = 'This will install the real PWA, not just a shortcut.';
-  } else {
-    desc.textContent = 'Open Settings and tap "Check Again" after visiting this page a couple of times in Chrome.';
-    desc.style.color = 'var(--muted)';
-    readyZone.style.display = 'none';
-    steps.classList.remove('show');
-    instZone.style.display = 'none';
-    statusBar.textContent = '';
-  }
-}
-
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredInstall = e;
-  id('install-banner').style.display = 'flex';
-  updateInstallUI();
-});
-
-window.addEventListener('appinstalled', () => {
-  deferredInstall = null;
-  id('install-banner').style.display = 'none';
-  updateInstallUI();
-  showToast('✓ APP INSTALLED!');
-});
-
-id('install-pwa-btn').addEventListener('click', async () => {
-  if (!deferredInstall) return;
-  const btn = id('install-pwa-btn');
-  btn.textContent = 'Installing...';
-  btn.disabled = true;
-  deferredInstall.prompt();
-  const { outcome } = await deferredInstall.userChoice;
-  deferredInstall = null;
-  id('install-banner').style.display = 'none';
-  if (outcome === 'accepted') {
-    showToast('✓ APP INSTALLED!');
-  } else {
-    btn.textContent = '⬇ INSTALL APP NOW';
-    btn.disabled = false;
-    id('install-status-bar').textContent = 'Install was cancelled — tap again to retry.';
-  }
-  updateInstallUI();
-});
-
-id('recheck-btn').addEventListener('click', () => {
-  const statusBar = id('install-status-bar');
-  statusBar.textContent = 'Checking...';
-  setTimeout(() => {
-    if (isInstalled()) {
-      updateInstallUI();
-    } else if (deferredInstall) {
-      updateInstallUI();
-    } else {
-      // Show manual steps since prompt still not ready
-      id('manual-steps').classList.add('show');
-      statusBar.textContent = 'Still not ready. Follow the steps below or try reloading Chrome.';
-    }
-  }, 600);
+  const banner = id('install-banner');
+  banner.style.display = 'flex';
 });
 
 id('install-btn').addEventListener('click', async () => {
   if (!deferredInstall) return;
   deferredInstall.prompt();
   const { outcome } = await deferredInstall.userChoice;
-  if (outcome === 'accepted') id('install-banner').style.display = 'none';
+  if (outcome === 'accepted') {
+    id('install-banner').style.display = 'none';
+  }
   deferredInstall = null;
 });
 
