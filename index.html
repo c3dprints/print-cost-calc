@@ -994,6 +994,7 @@ document.querySelectorAll('nav button').forEach(btn => {
     document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     id('tab-' + t).classList.add('active');
+    if (t === 'settings') updateInstallUI();
   });
 });
 
@@ -1165,21 +1166,21 @@ function isInstalled() {
 }
 
 function updateInstallUI() {
+  // Guard: elements only exist once Settings tab has been rendered
   const desc      = id('install-desc');
   const readyZone = id('install-ready-zone');
   const steps     = id('manual-steps');
   const instZone  = id('installed-zone');
   const statusBar = id('install-status-bar');
+  if (!desc || !readyZone || !steps || !instZone || !statusBar) return;
 
   if (isInstalled()) {
-    // Running as PWA already
     desc.textContent = 'You're all set!';
     readyZone.style.display = 'none';
     steps.classList.remove('show');
     instZone.style.display = 'block';
     statusBar.textContent = '';
   } else if (deferredInstall) {
-    // Chrome has the install prompt ready — best case
     desc.textContent = '✅ Chrome is ready to install! Tap the button below for the real app experience — no browser bar, works offline.';
     desc.style.color = 'var(--text)';
     readyZone.style.display = 'block';
@@ -1187,11 +1188,10 @@ function updateInstallUI() {
     instZone.style.display = 'none';
     statusBar.textContent = 'This will install the real PWA, not just a shortcut.';
   } else {
-    // Prompt not available yet
-    desc.textContent = 'Chrome's install prompt hasn't appeared yet. This usually means the page needs to be visited more, or the app is already installed.';
+    desc.textContent = 'Open Settings and tap "Check Again" after visiting this page a couple of times in Chrome.';
     desc.style.color = 'var(--muted)';
     readyZone.style.display = 'none';
-    steps.classList.add('show');
+    steps.classList.remove('show');
     instZone.style.display = 'none';
     statusBar.textContent = '';
   }
@@ -1231,11 +1231,17 @@ id('install-pwa-btn').addEventListener('click', async () => {
 });
 
 id('recheck-btn').addEventListener('click', () => {
-  id('install-status-bar').textContent = 'Checking...';
+  const statusBar = id('install-status-bar');
+  statusBar.textContent = 'Checking...';
   setTimeout(() => {
-    updateInstallUI();
-    if (!deferredInstall && !isInstalled()) {
-      id('install-status-bar').textContent = 'Prompt still not available. Try reloading the page in Chrome.';
+    if (isInstalled()) {
+      updateInstallUI();
+    } else if (deferredInstall) {
+      updateInstallUI();
+    } else {
+      // Show manual steps since prompt still not ready
+      id('manual-steps').classList.add('show');
+      statusBar.textContent = 'Still not ready. Follow the steps below or try reloading Chrome.';
     }
   }, 600);
 });
@@ -1261,7 +1267,6 @@ if ('serviceWorker' in navigator) {
 (function init() {
   const s = loadSettings();
   applySettings(s);
-  updateInstallUI();
 })();
 </script>
 </body>
