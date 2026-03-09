@@ -1116,7 +1116,7 @@ function updateInstallUI() {
     btn.className = 'waiting';
     icon.textContent = '⏳';
     label.textContent = 'WAITING FOR CHROME...';
-    hint.textContent = 'Open this page in Chrome, scroll around, then come back here and tap to retry.';
+    hint.textContent = 'Open in Chrome, scroll around, then come back and tap to retry.';
     hint.className = 'orange';
     btn.disabled = false;
   }
@@ -1148,7 +1148,7 @@ id('install-pwa-btn').addEventListener('click', async () => {
     if (outcome === 'accepted') {
       showToast('✓ APP INSTALLED!');
     } else {
-      id('install-hint').textContent = 'Cancelled — tap again whenever you're ready.';
+      id('install-hint').textContent = 'Cancelled — tap again whenever you are ready.';
     }
     updateInstallUI();
   } else {
