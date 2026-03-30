@@ -1,4 +1,4 @@
-const CACHE = 'c3d-calc-v3';
+const CACHE = 'c3d-calc-v4';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {

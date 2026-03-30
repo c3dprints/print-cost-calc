@@ -652,7 +652,6 @@
             <input type="number" id="inp-qty" placeholder="1" inputmode="numeric" min="1" step="1" value="1">
             <span class="unit-tag">pcs</span>
           </div>
-          <div id="qty-hint" class="convert-hint" style="margin-top:6px"></div>
         </div>
 
         <button id="calc-btn">CALCULATE COST</button>
@@ -1024,10 +1023,10 @@ function calculate() {
   void totalEl.offsetWidth;
   totalEl.classList.add('pop');
 
-  const totalAll   = isFinite(totalCost) ? totalCost * qty : Infinity;
-  const taxAmtAll  = isFinite(taxAmt)   ? taxAmt   * qty : Infinity;
-  const sellAll    = isFinite(sellPrice) ? sellPrice * qty : Infinity;
-  const profitAll  = isFinite(profit)   ? profit   * qty : Infinity;
+  const totalAll  = isFinite(totalCost)  ? totalCost  * qty : Infinity;
+  const taxAmtAll = isFinite(taxAmt)     ? taxAmt     * qty : Infinity;
+  const sellAll   = isFinite(sellPrice)  ? sellPrice  * qty : Infinity;
+  const profitAll = isFinite(profit)     ? profit     * qty : Infinity;
 
   if (!isFinite(totalCost)) {
     totalEl.textContent = '∞';
@@ -1080,12 +1079,10 @@ function calculate() {
   const spoolPct = (grams * qty / s.spoolG * 100).toFixed(1);
   id('st-spool').textContent = spoolPct + '%';
 
-  const totalGrams = grams * qty;
-  const totalOz    = oz * qty;
   if (qty > 1) {
     id('r-convert').textContent = unit === 'g'
-      ? `${totalGrams.toFixed(1)}g total = ${totalOz.toFixed(2)} oz  ·  ${spoolPct}% of spool`
-      : `${(weightRaw * qty).toFixed(2)} oz total = ${totalGrams.toFixed(1)}g  ·  ${spoolPct}% of spool`;
+      ? `${(grams*qty).toFixed(1)}g total = ${(oz*qty).toFixed(2)} oz  ·  ${spoolPct}% of spool`
+      : `${(weightRaw*qty).toFixed(2)} oz total = ${(grams*qty).toFixed(1)}g  ·  ${spoolPct}% of spool`;
   } else {
     id('r-convert').textContent = unit === 'g'
       ? `${grams.toFixed(1)}g = ${oz.toFixed(2)} oz  ·  ${spoolPct}% of spool`
@@ -1109,7 +1106,6 @@ id('clear-btn').addEventListener('click', () => {
   id('fail-display').textContent = '0%';
   id('fail-display').style.color = 'var(--green)';
   id('convert-hint').textContent = '';
-  id('qty-hint').textContent = '';
 });
 
 // ── Save Settings ──────────────────────────────────────
