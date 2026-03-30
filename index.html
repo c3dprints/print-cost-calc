@@ -646,6 +646,15 @@
           <div class="slider-labels"><span>0% — Perfect</span><span>50%</span><span>100% — Always Fails</span></div>
         </div>
 
+        <div class="field">
+          <label>QUANTITY</label>
+          <div class="input-row">
+            <input type="number" id="inp-qty" placeholder="1" inputmode="numeric" min="1" step="1" value="1">
+            <span class="unit-tag">pcs</span>
+          </div>
+          <div id="qty-hint" class="convert-hint" style="margin-top:6px"></div>
+        </div>
+
         <button id="calc-btn">CALCULATE COST</button>
         <button id="clear-btn">Clear</button>
       </div>
@@ -658,6 +667,7 @@
       <div class="card">
         <div id="total-display">
           <div id="total-label">YOUR COST TO MAKE</div>
+          <div id="qty-badge" style="display:none;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px"></div>
           <div id="total-amount">$--.--</div>
           <div id="total-sub"></div>
         </div>
@@ -968,6 +978,7 @@ function calculate() {
   const weightRaw = parseFloat(id('inp-weight').value);
   const hrs       = parseFloat(id('inp-hrs').value);
   const failPct   = parseFloat(id('fail-slider').value);
+  const qty       = Math.max(1, parseInt(id('inp-qty').value) || 1);
 
   if (isNaN(weightRaw) || weightRaw <= 0) {
     alert('Please enter filament weight > 0');
@@ -1013,31 +1024,51 @@ function calculate() {
   void totalEl.offsetWidth;
   totalEl.classList.add('pop');
 
+  const totalAll   = isFinite(totalCost) ? totalCost * qty : Infinity;
+  const taxAmtAll  = isFinite(taxAmt)   ? taxAmt   * qty : Infinity;
+  const sellAll    = isFinite(sellPrice) ? sellPrice * qty : Infinity;
+  const profitAll  = isFinite(profit)   ? profit   * qty : Infinity;
+
   if (!isFinite(totalCost)) {
     totalEl.textContent = '∞';
     totalEl.style.color = 'var(--red)';
     id('total-sub').textContent = '100% fail rate — never succeeds';
+    id('qty-badge').style.display = 'none';
+    id('per-unit-line').style.display = 'none';
+  } else if (qty > 1) {
+    totalEl.textContent = fmt(totalAll);
+    totalEl.style.color = 'var(--green)';
+    id('total-sub').textContent = `${qty} pcs  ·  ${(grams * qty).toFixed(1)}g total  ·  ${(hrs * qty).toFixed(1)}hr total`;
+    id('qty-badge').textContent = `${qty} PIECES`;
+    id('qty-badge').style.display = 'block';
+    id('per-unit-line').textContent = `${fmt(totalCost)} per piece`;
+    id('per-unit-line').style.display = 'block';
   } else {
     totalEl.textContent = fmt(totalCost);
     totalEl.style.color = 'var(--green)';
     id('total-sub').textContent = `${hrs}hr print · ${grams.toFixed(1)}g filament`;
+    id('qty-badge').style.display = 'none';
+    id('per-unit-line').style.display = 'none';
   }
 
   // ── Line items ──────────────────────────
-  id('r-fil').textContent      = fmt(filCost);
-  id('r-elec').textContent     = fmt(elecCost);
-  id('r-nozzle').textContent   = fmt(nozWear);
-  id('r-sheet').textContent    = fmt(sheetWear);
-  id('r-boxing').textContent   = fmt(s.boxing);
-  id('r-shipping').textContent = fmt(s.shipping);
-  id('r-fail').textContent     = failPct === 0 ? '--' : fmt(failOverhead);
+  id('r-fil').textContent      = fmt(filCost * qty);
+  id('r-elec').textContent     = fmt(elecCost * qty);
+  id('r-nozzle').textContent   = fmt(nozWear * qty);
+  id('r-sheet').textContent    = fmt(sheetWear * qty);
+  id('r-boxing').textContent   = fmt(s.boxing * qty);
+  id('r-shipping').textContent = fmt(s.shipping * qty);
+  id('r-fail').textContent     = failPct === 0 ? '--' : fmt(failOverhead * qty);
   id('r-fail').className       = 'bl-val ' + (failPct > 0 ? 'red' : 'muted');
-  id('r-subtotal').textContent = fmt(totalCost);
+  id('r-subtotal').textContent = fmt(totalAll);
   id('r-tax-label').textContent= `Sales Tax (${s.tax}%)`;
-  id('r-tax').textContent      = fmt(taxAmt);
-  id('r-sell').textContent     = fmt(sellPrice);
-  id('r-sell-note').textContent= isFinite(profit)
-    ? `+${s.markup.toFixed(0)}% markup  ·  profit: ${fmt(profit)}`
+  id('r-tax').textContent      = fmt(taxAmtAll);
+  id('r-sell').textContent     = fmt(sellAll);
+  id('r-sell-note').textContent= isFinite(profitAll)
+    ? `+${s.markup.toFixed(0)}% markup  ·  profit: ${fmt(profitAll)}`
+    : '';
+  id('r-sell-per-unit').textContent = qty > 1 && isFinite(sellPrice)
+    ? `${fmt(sellPrice)} per piece`
     : '';
 
   // ── Stats ───────────────────────────────
@@ -1045,13 +1076,21 @@ function calculate() {
   id('st-ephr').textContent  = `$${((s.watts/1000)*s.kwh).toFixed(4)}`;
   id('st-noz').textContent   = `$${nozPerHr.toFixed(4)}`;
   id('st-sht').textContent   = `$${sheetPerPr.toFixed(4)}`;
-  id('st-kwh').textContent   = kwhUsed.toFixed(3);
-  const spoolPct = (grams / s.spoolG * 100).toFixed(1);
+  id('st-kwh').textContent   = (kwhUsed * qty).toFixed(3);
+  const spoolPct = (grams * qty / s.spoolG * 100).toFixed(1);
   id('st-spool').textContent = spoolPct + '%';
 
-  id('r-convert').textContent = unit === 'g'
-    ? `${grams.toFixed(1)}g = ${oz.toFixed(2)} oz  ·  ${spoolPct}% of spool`
-    : `${weightRaw.toFixed(2)} oz = ${grams.toFixed(1)}g  ·  ${spoolPct}% of spool`;
+  const totalGrams = grams * qty;
+  const totalOz    = oz * qty;
+  if (qty > 1) {
+    id('r-convert').textContent = unit === 'g'
+      ? `${totalGrams.toFixed(1)}g total = ${totalOz.toFixed(2)} oz  ·  ${spoolPct}% of spool`
+      : `${(weightRaw * qty).toFixed(2)} oz total = ${totalGrams.toFixed(1)}g  ·  ${spoolPct}% of spool`;
+  } else {
+    id('r-convert').textContent = unit === 'g'
+      ? `${grams.toFixed(1)}g = ${oz.toFixed(2)} oz  ·  ${spoolPct}% of spool`
+      : `${weightRaw.toFixed(2)} oz = ${grams.toFixed(1)}g  ·  ${spoolPct}% of spool`;
+  }
 
   // Switch to results tab
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -1065,10 +1104,12 @@ function calculate() {
 id('clear-btn').addEventListener('click', () => {
   id('inp-weight').value = '';
   id('inp-hrs').value    = '';
+  id('inp-qty').value    = '1';
   id('fail-slider').value = 0;
   id('fail-display').textContent = '0%';
   id('fail-display').style.color = 'var(--green)';
   id('convert-hint').textContent = '';
+  id('qty-hint').textContent = '';
 });
 
 // ── Save Settings ──────────────────────────────────────
