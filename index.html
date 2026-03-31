@@ -721,6 +721,7 @@
             <span class="sell-hero-val" id="r-sell">--</span>
           </div>
           <div class="sell-hero-note" id="r-sell-note"></div>
+          <div class="sell-hero-note" id="r-sell-per-unit" style="color:var(--blue)"></div>
         </div>
       </div>
 
@@ -1032,22 +1033,20 @@ function calculate() {
     totalEl.textContent = '∞';
     totalEl.style.color = 'var(--red)';
     id('total-sub').textContent = '100% fail rate — never succeeds';
-    id('qty-badge').style.display = 'none';
-    id('per-unit-line').style.display = 'none';
+    const qb0 = id('qty-badge'); if(qb0) qb0.style.display = 'none';
+    const pul0 = id('per-unit-line'); if(pul0) pul0.style.display = 'none';
   } else if (qty > 1) {
     totalEl.textContent = fmt(totalAll);
     totalEl.style.color = 'var(--green)';
     id('total-sub').textContent = `${qty} pcs  ·  ${(grams * qty).toFixed(1)}g total  ·  ${(hrs * qty).toFixed(1)}hr total`;
-    id('qty-badge').textContent = `${qty} PIECES`;
-    id('qty-badge').style.display = 'block';
-    id('per-unit-line').textContent = `${fmt(totalCost)} per piece`;
-    id('per-unit-line').style.display = 'block';
+    const qb = id('qty-badge'); if(qb){ qb.textContent = `${qty} PIECES`; qb.style.display = 'block'; }
+    const pul = id('per-unit-line'); if(pul){ pul.textContent = `${fmt(totalCost)} per piece`; pul.style.display = 'block'; }
   } else {
     totalEl.textContent = fmt(totalCost);
     totalEl.style.color = 'var(--green)';
     id('total-sub').textContent = `${hrs}hr print · ${grams.toFixed(1)}g filament`;
-    id('qty-badge').style.display = 'none';
-    id('per-unit-line').style.display = 'none';
+    const qb2 = id('qty-badge'); if(qb2) qb2.style.display = 'none';
+    const pul2 = id('per-unit-line'); if(pul2) pul2.style.display = 'none';
   }
 
   // ── Line items ──────────────────────────
